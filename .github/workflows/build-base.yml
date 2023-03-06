@@ -29,9 +29,10 @@ jobs:
         push: false
         tags: devcontainer-base-yoep:${{ steps.extract_branch.outputs.branch }}
 
+# This uses bash variable expansion magic to do the lowercase: https://www.gnu.org/software/bash/manual/html_node/Shell-Parameter-Expansion.html
     - name: Push
       shell: bash
-      run: docker push ghcr.io/$GITHUB_ACTOR/devcontainer-base-yoep:${{ steps.extract_branch.outputs.branch }}
+      run: docker push ghcr.io/${GITHUB_ACTOR,,}/devcontainer-base-yoep:${{ steps.extract_branch.outputs.branch }}
       id: docker_push
 
     - name: Image digest
