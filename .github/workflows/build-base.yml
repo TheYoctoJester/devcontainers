@@ -19,9 +19,10 @@ jobs:
       run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
       id: extract_branch
 
+# This uses bash variable expansion magic to do the lowercase: https://www.gnu.org/software/bash/manual/html_node/Shell-Parameter-Expansion.html
     - name: container name
         run: |
-          echo "C_NAME=ghcr.io/${GITHUB_ACTOR,,}/${C_SOURCE}:${{ steps.extract_branch.outputs.branch }}" >> ${GITHUB_ENV}
+          echo "C_NAME=ghcr.io/${GITHUB_ACTOR,,}/${env.C_SOURCE}:${{ steps.extract_branch.outputs.branch }}" >>${GITHUB_ENV}
 
     - name: Set up Docker Buildx
       id: buildx
@@ -36,7 +37,6 @@ jobs:
         push: false
         tags: ${C_NAME}
 
-# This uses bash variable expansion magic to do the lowercase: https://www.gnu.org/software/bash/manual/html_node/Shell-Parameter-Expansion.html
     - name: Push
       shell: bash
       run: docker push ${C_NAME}
