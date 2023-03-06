@@ -15,25 +15,24 @@ jobs:
       shell: bash
       run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
       id: extract_branch
-    
-    - name: Login to Docker Hub
-      uses: docker/login-action@v1
-      with:
-        username: ${{ secrets.DOCKER_HUB_USERNAME }}
-        password: ${{ secrets.DOCKER_HUB_PASSWORD }}
 
     - name: Set up Docker Buildx
       id: buildx
       uses: docker/setup-buildx-action@v1
 
-    - name: Build and push
+    - name: Build
       id: docker_build
       uses: docker/build-push-action@v2
       with:
         context: ./
         file: ./YOEP/Dockerfile.base
-        push: true
-        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/devcontainer-base-yoep:${{ steps.extract_branch.outputs.branch }}
+        push: false
+        tags: devcontainer-base-yoep:${{ steps.extract_branch.outputs.branch }}
+
+    - name: Push
+      shell: bash
+      run: docker push ghcr.io/${{ github.actor }}/devcontainer-base-yoep:${{ steps.extract_branch.outputs.branch }}
+      id: docker_push
 
     - name: Image digest
       run: echo ${{ steps.docker_build.outputs.digest }}
