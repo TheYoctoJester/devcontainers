@@ -2,6 +2,9 @@ name: build base container
 
 on: [push]
 
+env:
+  C_SOURCE: devcontainer-base-yoep
+
 jobs:
 
   build:
@@ -10,11 +13,15 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-
+    
     - name: Extract branch name
       shell: bash
       run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
       id: extract_branch
+
+    - name: container name
+        run: |
+          echo "C_NAME=ghcr.io/${GITHUB_ACTOR,,}/${C_SOURCE}:${{ steps.extract_branch.outputs.branch }}" >> ${GITHUB_ENV}
 
     - name: Set up Docker Buildx
       id: buildx
@@ -27,12 +34,12 @@ jobs:
         context: ./
         file: ./YOEP/Dockerfile.base
         push: false
-        tags: devcontainer-base-yoep:${{ steps.extract_branch.outputs.branch }}
+        tags: ${C_NAME}
 
 # This uses bash variable expansion magic to do the lowercase: https://www.gnu.org/software/bash/manual/html_node/Shell-Parameter-Expansion.html
     - name: Push
       shell: bash
-      run: docker push ghcr.io/${GITHUB_ACTOR,,}/devcontainer-base-yoep:${{ steps.extract_branch.outputs.branch }}
+      run: docker push ${C_NAME}
       id: docker_push
 
     - name: Image digest
