@@ -50,8 +50,37 @@ RUN yes | unminimize \
         iproute2 \
         openssh-client \
 		locales \
+		dumb-init \
     && locale-gen en_US.UTF-8
 
 ENV LANG=en_US.UTF-8
 
 RUN pip3 install kas
+
+COPY assets/distro-entry.sh \
+     assets/poky-entry.py \
+	 assets/poky-launch.sh \
+	 assets/restrict_useradd.sh \
+	 assets/restrict_groupadd.sh \
+	 assets/usersetup.py \
+	 /usr/bin/
+
+COPY sudoers.usersetup /etc/
+
+# We remove the user because we add a new one of our own.
+# The usersetup user is solely for adding a new user that has the same uid,
+# as the workspace. 70 is an arbitrary *low* unused uid on debian.
+RUN mkdir /home/yoctouser && \
+    groupadd -g 70 usersetup && \
+    useradd -N -m -u 70 -g 70 usersetup && \
+    chmod 755 /usr/bin/usersetup.py \
+        /usr/bin/poky-entry.py \
+        /usr/bin/poky-launch.sh \
+        /usr/bin/restrict_groupadd.sh \
+        /usr/bin/restrict_useradd.sh && \
+    echo "#include /etc/sudoers.usersetup" >> /etc/sudoers
+
+USER usersetup
+WORKDIR /home/yoctouser
+
+ENTRYPOINT ["/usr/bin/distro-entry.sh", "/usr/bin/dumb-init", "--", "/usr/bin/poky-entry.py"]
